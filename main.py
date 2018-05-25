@@ -27,7 +27,10 @@ async def on_ready():
  
 @client.event
 async def on_message(message):
-    print(message.content)
+    if(message.author.nick == 'Grammar Nazi'):
+        return
+
+    await message.channel.send(message.content)
 
 
 # now actually connect the bot
