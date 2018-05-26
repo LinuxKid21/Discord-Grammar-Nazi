@@ -13,6 +13,8 @@ grammar_en = language_check.LanguageTool('en-US')
 import nltk
 from nltk.corpus import wordnet
 
+import re
+
 # load configuration to get around hard coded tokens
 config = configparser.ConfigParser()
 with open('config.ini') as config_file:
@@ -38,18 +40,32 @@ def handle_grammar(message):
         if(match.ruleId == 'UPPERCASE_SENTENCE_START'):
             sentences.append('Wow. I can\'t believe you didn\'t start your sentence with a capital letter.')
         elif(match.ruleId == 'MORFOLOGIK_RULE_EN_US'): # spelling errors
+            if(bad_word[0] == '@'):
+                continue # don't over react when the @mention someone!
             sentences.append('Ugh. The word \'' + bad_word + '\' is not spelled correctly.')
         elif(match.ruleId == 'IT_VBZ'): # this are a problem <- fixes that sort of issue
             sentences.append('Subject verb disagreement! Did you mean to use \'' + match.replacements[0] + '\' instead? (hint: you did)')
         elif(match.ruleId in ['IT_IS', 'EN_CONTRACTION_SPELLING']): # its when should be it's and that when should be that's
             sentences.append('Missing an apostrophe here: \'' + bad_word + '\'. Fix it.')
         elif(match.ruleId == 'PROGRESSIVE_VERBS'): # ???
-            sentences.append('This word is not usually used in the progressive form.' +
-                'I know you don\'t know what that means. http://lmgtfy.com/?q=progressive+form')
+            sentences.append('This usage is not usually used in the progressive form.' +
+                'I know you don\'t know what that means so here it is: http://lmgtfy.com/?q=progressive+form')
         elif(match.ruleId == 'PERS_PRONOUN_AGREEMENT_SENT_START'): # I are should be I am
             sentences.append('really? That verb does not agree with \'' + bad_word + '\'. You clearly meant \'' + match.replacements[0] + '\'')
         else:
             sentences.append([match])
+
+    #punctuation = ['.', '!', '?']
+
+    ## looks like the following:
+    ##   ['This is a sentence' '.' 'Okay' '?' '']
+    ## except the last one is cut out 'cause we don't want it
+    #split = re.split('(\.|\!|\?)', message.content)
+
+
+    #if(split[-1] not in punctuation):
+    #    sentences.append('!?!?!?!?!? NO PUNCTUATION? Look at where you missed it! ' + split[-1] + '(here)')
+
     return sentences
 
  
@@ -63,8 +79,8 @@ async def on_message(message):
         await message.channel.send(sentence)
 
 
-    if "thesaurus " in message.content:
-        my_string_1 = message.content.split("thesaurus ", 1)[1]
+    if "Thesaurus " in message.content:
+        my_string_1 = message.content.split("Thesaurus ", 1)[1]
 
         end = my_string_1.find(" ")
         my_string_2 = my_string_1
@@ -108,3 +124,4 @@ async def on_message(message):
 # now actually connect the bot
 client.run(config.get(section='Configuration', option='connection_token'),
            bot=True, reconnect=True)
+
