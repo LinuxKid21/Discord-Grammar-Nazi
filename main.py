@@ -15,6 +15,8 @@ from nltk.corpus import wordnet
 
 import re
 
+from PIL import ImageFont, ImageDraw, Image
+
 # load configuration to get around hard coded tokens
 config = configparser.ConfigParser()
 with open('config.ini') as config_file:
@@ -55,18 +57,31 @@ def handle_grammar(message):
         else:
             sentences.append([match])
 
-    #punctuation = ['.', '!', '?']
+    punctuation = ['.', '!', '?']
 
-    ## looks like the following:
-    ##   ['This is a sentence' '.' 'Okay' '?' '']
-    ## except the last one is cut out 'cause we don't want it
-    #split = re.split('(\.|\!|\?)', message.content)
+    # looks like the following:
+    #   ['This is a sentence' '.' 'Okay' '?' '']
+    split = re.split('(\.|\!|\?)', message.content)
+
+    if(split[-1] == ''):
+        split = split[:-1] # chop off last empty if ending in punctuation
 
 
-    #if(split[-1] not in punctuation):
-    #    sentences.append('!?!?!?!?!? NO PUNCTUATION? Look at where you missed it! ' + split[-1] + '(here)')
+    img = ''
+    if(split[-1] not in punctuation):
+        smaller_text = split[-1][-15:]
+        font = ImageFont.truetype('DejaVuSans.ttf', 75)
+        im = Image.open('NoteBack.png')
+        d = ImageDraw.Draw(im)
+        d.text((200,560), smaller_text, fill=(0, 0, 0), font=font)
+        pos = d.textsize(smaller_text, font)
+        arrow = Image.open('arrow.png')
+        im.paste(arrow, (200+pos[0], 560+pos[1]), arrow)
+        im.save('tmp.jpg')
+        img = 'tmp.jpg'
+        sentences.append('!?!?!?!?!? NO PUNCTUATION? Look at where you missed it! ' + split[-1][-20:] + '(here)')
 
-    return sentences
+    return sentences, img
 
  
 @client.event
@@ -74,9 +89,12 @@ async def on_message(message):
     if(message.author.bot):
         return
 
-    sentences = handle_grammar(message)
+    sentences, img_loc = handle_grammar(message)
     for sentence in sentences:
         await message.channel.send(sentence)
+
+    if(img_loc != ''):
+        await message.channel.send(img_loc, file=discord.File(img_loc))
 
 
     if "Thesaurus " in message.content:
