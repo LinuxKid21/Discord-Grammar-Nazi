@@ -79,7 +79,7 @@ def handle_grammar(message):
         im.paste(arrow, (200+pos[0], 560+pos[1]), arrow)
         im.save('tmp.jpg')
         img = 'tmp.jpg'
-        sentences.append('!?!?!?!?!? NO PUNCTUATION? Look at where you missed it! ' + split[-1][-20:] + '(here)')
+        sentences.append('!?!?!?!?!? NO PUNCTUATION? Look at where you missed it!')
 
     return sentences, img
 
